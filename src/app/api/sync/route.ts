@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
-import { fetchGithubRepos, fetchGithubReadme } from '@/lib/github/api'
+import { fetchGithubRepos } from '@/lib/github/api'
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     const supabase = await createClient()
     const { data: { session } } = await supabase.auth.getSession()
@@ -67,8 +67,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ message: 'Sync complete', syncedCount })
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Sync error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 })
   }
 }

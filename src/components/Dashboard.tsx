@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from 'react'
 import { Project } from '@/types'
-import { Search, RefreshCw, Star, Github, ExternalLink, Calendar, PlusCircle } from 'lucide-react'
+import { Search, RefreshCw, Star, Calendar } from 'lucide-react'
+import { GithubIcon } from '@/components/icons/GithubIcon'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
@@ -24,7 +25,7 @@ const mapTechToDevicon = (tech: string) => {
 }
 
 export default function Dashboard({ initialProjects }: { initialProjects: Project[] }) {
-  const [projects, setProjects] = useState<Project[]>(initialProjects)
+  const [projects] = useState<Project[]>(initialProjects)
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<'updated' | 'stars' | 'name'>('updated')
   const [isSyncing, setIsSyncing] = useState(false)
@@ -43,8 +44,8 @@ export default function Dashboard({ initialProjects }: { initialProjects: Projec
       } else {
         setSyncMessage(`Error: ${data.error}`)
       }
-    } catch (e: any) {
-      setSyncMessage(`Error: ${e.message}`)
+    } catch (e) {
+      setSyncMessage(`Error: ${e instanceof Error ? e.message : String(e)}`)
     } finally {
       setIsSyncing(false)
     }
@@ -66,7 +67,7 @@ export default function Dashboard({ initialProjects }: { initialProjects: Projec
   }
 
   const filteredAndSorted = useMemo(() => {
-    let result = projects.filter(p =>
+    const result = projects.filter(p =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       (p.description?.toLowerCase() || '').includes(search.toLowerCase()) ||
       (p.technologies || []).some(t => t.toLowerCase().includes(search.toLowerCase()))
@@ -150,7 +151,7 @@ export default function Dashboard({ initialProjects }: { initialProjects: Projec
                     {project.name}
                   </Link>
                   <a href={project.html_url} target="_blank" rel="noreferrer" className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-white">
-                    <Github className="w-4 h-4" />
+                    <GithubIcon className="w-4 h-4" />
                   </a>
                 </div>
                 <div className="flex items-center gap-1 text-zinc-400 bg-zinc-950 px-2 py-1 rounded-md text-sm border border-zinc-800">
@@ -213,7 +214,7 @@ export default function Dashboard({ initialProjects }: { initialProjects: Projec
 
           {filteredAndSorted.length === 0 && (
             <div className="col-span-full py-20 flex flex-col items-center justify-center text-center bg-zinc-900/30 border border-zinc-800 border-dashed rounded-2xl">
-              <Github className="w-12 h-12 text-zinc-600 mb-4" />
+              <GithubIcon className="w-12 h-12 text-zinc-600 mb-4" />
               <h3 className="text-xl font-medium text-zinc-300">No projects found</h3>
               <p className="text-zinc-500 mt-2 max-w-md">Try syncing your GitHub account or adjusting your search filters to see your repositories.</p>
               <Button onClick={handleSync} variant="outline" className="mt-6 border-zinc-700">

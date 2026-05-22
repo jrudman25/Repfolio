@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { MessageCircle, X, Send, Bot, User } from 'lucide-react'
+import { MessageCircle, X, Send, Bot } from 'lucide-react'
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false)
@@ -40,8 +40,8 @@ export default function ChatWidget() {
       } else {
         setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${data.error}` }])
       }
-    } catch (error: any) {
-      setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${error.message}` }])
+    } catch (error) {
+      setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${error instanceof Error ? error.message : String(error)}` }])
     } finally {
       setIsLoading(false)
     }

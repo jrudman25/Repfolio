@@ -11,7 +11,7 @@ export async function fetchGithubRepos(accessToken: string) {
   // Try to get from cache first
   const cached = await redis.get(cacheKey)
   if (cached) {
-    return cached as any[]
+    return cached as unknown[]
   }
 
   // Fetch from GitHub

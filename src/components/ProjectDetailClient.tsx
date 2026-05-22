@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Project } from '@/types'
+import { Project, Todo, Milestone } from '@/types'
 import { CheckCircle2, Circle, Plus, Trash2, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
@@ -15,12 +15,12 @@ export default function ProjectDetailClient({
   initialTodos 
 }: { 
   project: Project, 
-  initialMilestones: any[], 
-  initialTodos: any[] 
+  initialMilestones: Milestone[], 
+  initialTodos: Todo[] 
 }) {
   const supabase = createClient()
-  const [todos, setTodos] = useState(initialTodos)
-  const [milestones, setMilestones] = useState(initialMilestones)
+  const [todos, setTodos] = useState<Todo[]>(initialTodos)
+  const [milestones, setMilestones] = useState<Milestone[]>(initialMilestones)
   
   const [newTodo, setNewTodo] = useState('')
   const [newMilestoneTitle, setNewMilestoneTitle] = useState('')
@@ -29,7 +29,7 @@ export default function ProjectDetailClient({
     e.preventDefault()
     if (!newTodo.trim()) return
     
-    const { data, error } = await supabase.from('todos').insert({
+    const { data } = await supabase.from('todos').insert({
       project_id: project.id,
       task: newTodo
     }).select().single()
@@ -58,7 +58,7 @@ export default function ProjectDetailClient({
     e.preventDefault()
     if (!newMilestoneTitle.trim()) return
     
-    const { data, error } = await supabase.from('milestones').insert({
+    const { data } = await supabase.from('milestones').insert({
       project_id: project.id,
       title: newMilestoneTitle,
       status: 'pending'

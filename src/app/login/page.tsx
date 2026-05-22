@@ -1,7 +1,7 @@
 'use client'
 
 import { createClient } from '@/utils/supabase/client'
-import { Github } from 'lucide-react'
+import { GithubIcon } from '@/components/icons/GithubIcon'
 import { Button } from '@/components/ui/button'
 
 export default function LoginPage() {
@@ -31,7 +31,7 @@ export default function LoginPage() {
             className="w-full flex items-center justify-center gap-2 bg-white text-zinc-950 hover:bg-zinc-200"
             size="lg"
           >
-            <Github className="w-5 h-5" />
+            <GithubIcon className="w-5 h-5" />
             Sign in with GitHub
           </Button>
         </div>

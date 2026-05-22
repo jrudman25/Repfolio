@@ -16,3 +16,19 @@ export type Project = {
   created_at: string
   updated_at: string
 }
+
+export type Todo = {
+  id: string
+  project_id: string
+  task: string
+  is_completed: boolean
+  created_at: string
+}
+
+export type Milestone = {
+  id: string
+  project_id: string
+  title: string
+  status: 'pending' | 'in_progress' | 'completed'
+  created_at: string
+}
