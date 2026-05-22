@@ -30,6 +30,7 @@ export default function Dashboard({ initialProjects }: { initialProjects: Projec
   const [sort, setSort] = useState<'updated' | 'stars' | 'name'>('updated')
   const [isSyncing, setIsSyncing] = useState(false)
   const [syncMessage, setSyncMessage] = useState('')
+  const [processingId, setProcessingId] = useState<string | null>(null)
 
   const handleSync = async () => {
     setIsSyncing(true)
@@ -52,6 +53,7 @@ export default function Dashboard({ initialProjects }: { initialProjects: Projec
   }
 
   const handleAIProcess = async (projectId: string) => {
+    setProcessingId(projectId)
     try {
       const res = await fetch('/api/process-project', {
         method: 'POST',
@@ -60,9 +62,15 @@ export default function Dashboard({ initialProjects }: { initialProjects: Projec
       })
       if (res.ok) {
         window.location.reload()
+      } else {
+        const err = await res.json()
+        alert('Failed to generate summary: ' + (err.error || err.message || 'Unknown error'))
       }
     } catch (e) {
       console.error(e)
+      alert('Network error while processing.')
+    } finally {
+      setProcessingId(null)
     }
   }
 
@@ -143,7 +151,7 @@ export default function Dashboard({ initialProjects }: { initialProjects: Projec
             <div key={project.id} className="group flex flex-col bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-indigo-500/50 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-300 relative overflow-hidden">
 
               {/* Background gradient effect on hover */}
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
               <div className="relative z-10 flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
@@ -166,8 +174,18 @@ export default function Dashboard({ initialProjects }: { initialProjects: Projec
               ) : (
                 <div className="mb-6 flex-grow flex flex-col justify-center items-start gap-2">
                   <p className="text-zinc-500 text-sm italic">{project.description || 'No description available.'}</p>
-                  <Button variant="outline" size="sm" onClick={() => handleAIProcess(project.id)} className="text-xs mt-2 border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/10 hover:text-indigo-200">
-                    ✨ Generate AI Summary
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleAIProcess(project.id)} 
+                    disabled={processingId === project.id}
+                    className="text-xs mt-2 border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/10 hover:text-indigo-200"
+                  >
+                    {processingId === project.id ? (
+                      <><RefreshCw className="w-3 h-3 mr-2 animate-spin" /> Processing...</>
+                    ) : (
+                      <>✨ Generate AI Summary</>
+                    )}
                   </Button>
                 </div>
               )}

@@ -35,7 +35,7 @@ export async function fetchGithubRepos(accessToken: string) {
   return data
 }
 
-export async function fetchGithubReadme(owner: string, repo: string, accessToken: string) {
+export async function fetchGithubReadme(owner: string, repo: string, accessToken?: string) {
   const cacheKey = `github_readme_${owner}_${repo}`
   
   const cached = await redis.get(cacheKey)
@@ -43,12 +43,17 @@ export async function fetchGithubReadme(owner: string, repo: string, accessToken
     return cached as string
   }
 
+  const headers: Record<string, string> = {
+    Accept: 'application/vnd.github.raw',
+    'X-GitHub-Api-Version': '2022-11-28',
+  }
+
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`
+  }
+
   const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/readme`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      Accept: 'application/vnd.github.raw',
-      'X-GitHub-Api-Version': '2022-11-28',
-    },
+    headers,
   })
 
   if (!res.ok) {

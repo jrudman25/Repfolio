@@ -24,9 +24,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
 
-    const providerToken = session.provider_token
-    if (!providerToken) return NextResponse.json({ error: 'No GitHub token' }, { status: 400 })
-
+    const providerToken = session.provider_token || undefined
+    
     const [owner, repo] = project.full_name.split('/')
     
     // Fetch README
