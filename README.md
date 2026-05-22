@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Repfolio
+
+A full-stack, AI-powered GitHub portfolio manager. Repfolio automatically syncs your GitHub repositories, uses Google's Gemini AI to generate insightful project summaries, extracts your tech stack automatically, and provides a RAG-powered chatbot to let you converse with your codebase context.
+
+## What It Does
+
+1. **Connect with GitHub** — Sign in via GitHub OAuth using Supabase to grant access to your repositories.
+2. **Auto-Sync Repositories** — Fetches your repositories via GitHub API (with Upstash Redis caching) and supports real-time sync via GitHub Webhooks.
+3. **AI Project Summarization** — Uses Gemini 3.5 Flash (falling back to Gemini 3.1 Flash Lite) to analyze your README files, extract the core technologies used, and generate concise project summaries.
+4. **Vector Knowledge Base** — Uses Gemini's `text-embedding-004` to generate vector embeddings for your repositories and stores them in Supabase `pgvector`.
+5. **RAG Chatbot** — An integrated Chat UI powered by Gemini 3.1 Pro that can answer complex questions about your projects using vector similarity search.
+6. **Task & Milestone Tracking** — Keep track of your individual project to-dos and milestones directly in the Repfolio dashboard.
+7. **Rich Dashboard** — Sort by stars, recent updates, or alphabetical order. Easily visualize your tech stack with Devicons.
+
+## Tech Stack
+
+- **Frontend**: Next.js 15 (App Router), React 19, Tailwind CSS 4, Shadcn UI
+- **Backend**: Next.js API Routes / Server Actions
+- **Database**: Supabase (PostgreSQL + `pgvector`)
+- **Authentication**: Supabase Auth (GitHub Provider)
+- **AI Models**: Google Gemini (3.5 Flash, 3.1 Flash Lite, 3.1 Pro, text-embedding-004)
+- **Caching**: Upstash Redis
+- **Testing**: Vitest
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- A Supabase Project (with `vector` extension enabled)
+- A Google Gemini API Key
+- An Upstash Redis REST URL and Token
+- A GitHub OAuth App (configured in Supabase)
+
+### Installation
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Copy the environment variables:
+   ```bash
+   cp .env.local.example .env.local
+   ```
+   Fill in your API keys in `.env.local`.
+
+3. Setup the Database Schema:
+   Execute the `supabase/setup.sql` and `supabase/functions.sql` files in your Supabase SQL Editor.
+
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+## Testing
+
+Repfolio uses [Vitest](https://vitest.dev/) for unit testing.
+To run the test suite:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run test
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+MIT

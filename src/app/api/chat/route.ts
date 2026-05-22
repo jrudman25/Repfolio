@@ -4,8 +4,8 @@ import { generateEmbedding } from '@/lib/gemini/processor'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-// Using Gemini 3.1 Pro for the Chatbot as requested
-const chatModel = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' }) // fallback to 1.5 pro in SDK if 3.1 pro string is different
+// Primary and fallback models for Chat
+const CHAT_MODELS = ['gemini-3.5-flash', 'gemini-3.1-flash-lite']
 
 export async function POST(request: Request) {
   try {
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       const { data: matchedDocs, error } = await query
 
       if (!error && matchedDocs && matchedDocs.length > 0) {
-        contextText = matchedDocs.map((doc: any) => doc.content).join('\n\n')
+        contextText = matchedDocs.map((doc: { content: string }) => doc.content).join('\n\n')
       }
     }
 
@@ -54,26 +54,40 @@ export async function POST(request: Request) {
       If the user asks a question, use the context to answer. If you don't know the answer based on the context, say so, but you can also use your general programming knowledge.
     `
 
-    const formattedMessages = messages.map((m: any) => ({
+    const formattedMessages = messages.map((m: { role: string; content: string }) => ({
       role: m.role === 'user' ? 'user' : 'model',
       parts: [{ text: m.content }]
     }))
 
-    // Prepend system prompt to the first message or use systemInstruction feature
-    const chatSession = genAI.getGenerativeModel({
-      model: 'gemini-1.5-pro',
-      systemInstruction: systemPrompt
-    }).startChat({
-      history: formattedMessages.slice(0, -1)
-    })
+    let responseText = ''
+    let success = false
 
-    const result = await chatSession.sendMessage(lastMessage)
-    const responseText = result.response.text()
+    for (const modelName of CHAT_MODELS) {
+      try {
+        const chatSession = genAI.getGenerativeModel({
+          model: modelName,
+          systemInstruction: systemPrompt
+        }).startChat({
+          history: formattedMessages.slice(0, -1)
+        })
+
+        const result = await chatSession.sendMessage(lastMessage)
+        responseText = result.response.text()
+        success = true
+        break // break if successful
+      } catch (err) {
+        console.warn(`Model ${modelName} failed in chat, falling back...`, err)
+      }
+    }
+
+    if (!success) {
+      throw new Error('All Gemini models failed to generate a chat response.')
+    }
 
     return NextResponse.json({ role: 'assistant', content: responseText })
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Chat error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 })
   }
 }
