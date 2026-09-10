@@ -27,6 +27,10 @@ beforeEach(() => {
   }))
 })
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs() })
+it('accepts a Vercel-style empty request stream', async () => {
+  const response = await POST(new Request('https://app.test/api/sync', { method: 'POST', body: '' }))
+  expect(response.status).toBe(200)
+})
 it('paginates and upserts bounded batches owned by the verified user', async () => {
   const response = await POST(request())
   expect(response.status).toBe(200)

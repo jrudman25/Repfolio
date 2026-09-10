@@ -4,6 +4,11 @@ import { apiErrorResponse, parseChatBody, parseProjectId, readJsonBody } from '.
 it.each(['{', ''])('rejects malformed JSON %s', async body => {
   await expect(readJsonBody(new Request('https://app.test', { method: 'POST', body }))).rejects.toMatchObject({ status: 400 })
 })
+it('accepts an empty stream only when the endpoint explicitly allows it', async () => {
+  const request = () => new Request('https://app.test', { method: 'POST', body: '' })
+  await expect(readJsonBody(request())).rejects.toMatchObject({ status: 400 })
+  await expect(readJsonBody(request(), 1024, { allowEmpty: true })).resolves.toBeUndefined()
+})
 it('bounds streamed bytes even with a lying content-length and cancels', async () => {
   let cancelled = false
   const body = new ReadableStream({ pull(controller) { controller.enqueue(new Uint8Array(16)) }, cancel() { cancelled = true } })

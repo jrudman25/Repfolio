@@ -14,7 +14,7 @@ export function apiErrorResponse(error: unknown) {
   })
 }
 
-export async function readJsonBody(request: Request, maxBytes = 65536): Promise<unknown> {
+export async function readJsonBody(request: Request, maxBytes = 65536, options: { allowEmpty?: boolean } = {}): Promise<unknown> {
   const length = request.headers.get('content-length')
   if (length && Number(length) > maxBytes) throw new ApiError(400, 'Request body too large')
   const reader = request.body?.getReader()
@@ -32,6 +32,7 @@ export async function readJsonBody(request: Request, maxBytes = 65536): Promise<
       }
       chunks.push(value)
     }
+    if (size === 0 && options.allowEmpty) return undefined
     const bytes = new Uint8Array(size)
     let offset = 0
     for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength }

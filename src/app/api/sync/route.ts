@@ -9,7 +9,10 @@ export async function POST(request: Request) {
   try {
     const context = await authenticateUser()
     const { supabase, userId } = context
-    if (request.body) objectBody(await readJsonBody(request, 1024))
+    if (request.body) {
+      const body = await readJsonBody(request, 1024, { allowEmpty: true })
+      if (body !== undefined) objectBody(body)
+    }
     await enforceRateLimit(context, 'sync')
 
     // Attempt to get the provider token (GitHub PAT) from the session or a secure store
