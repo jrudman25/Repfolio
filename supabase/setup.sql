@@ -14,7 +14,7 @@ create table profiles (
 create table projects (
   id uuid default gen_random_uuid() primary key,
   user_id uuid references profiles(id) on delete cascade not null,
-  github_repo_id integer not null,
+  github_repo_id bigint not null,
   name text not null,
   full_name text not null,
   description text,
@@ -58,11 +58,16 @@ create table project_embeddings (
   content text not null, -- The text being embedded (e.g. README chunk)
   embedding vector(768), -- Gemini embeddings are typically 768 dimensions
   metadata jsonb default '{}'::jsonb, -- e.g., source file name, chunk index
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+  source text not null default ('legacy:' || gen_random_uuid()::text),
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(project_id, source)
 );
 
 -- Create index for vector similarity search
-create index on project_embeddings using hnsw (embedding vector_ip_ops);
+create index project_embeddings_embedding_cosine_idx on project_embeddings using hnsw (embedding vector_cosine_ops);
+create index projects_github_repo_id_idx on projects (github_repo_id);
+create index milestones_project_id_idx on milestones (project_id);
+create index todos_project_id_idx on todos (project_id);
 
 -- RLS Setup
 alter table profiles enable row level security;
@@ -136,7 +141,7 @@ begin
   );
   return new;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = '';
 
 create trigger on_auth_user_created
   after insert on auth.users
