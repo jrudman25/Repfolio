@@ -1,4 +1,4 @@
-# Repfolio
+# Proofstack
 
 A GitHub portfolio manager built with Next.js 15, React 19, Supabase, Gemini, and Upstash Redis. Connect GitHub, synchronize repository metadata, generate README summaries, and ask questions using your indexed README context.
 

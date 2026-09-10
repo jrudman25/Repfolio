@@ -21,7 +21,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col items-center justify-center p-24 bg-zinc-950 text-white">
       <div className="w-full max-w-md p-8 space-y-8 bg-zinc-900 rounded-xl border border-zinc-800 shadow-2xl">
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-white">Welcome to Repfolio</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-white">Welcome to Proofstack</h1>
           <p className="mt-2 text-zinc-400">Manage your GitHub portfolio with AI.</p>
         </div>
 

@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Repfolio - AI Powered Portfolio',
+  title: 'Proofstack - AI Powered Portfolio',
   description: 'Manage and sync your GitHub projects with Gemini AI.',
 }
 

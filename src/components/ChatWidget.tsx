@@ -75,7 +75,7 @@ export default function ChatWidget() {
         <div className="flex items-center justify-between p-4 border-b border-zinc-800 bg-zinc-900/50 rounded-t-2xl">
           <div className="flex items-center gap-2">
             <Bot className="w-5 h-5 text-indigo-400" />
-            <h3 id="chat-title" className="font-semibold text-white">Repfolio AI Assistant</h3>
+            <h3 id="chat-title" className="font-semibold text-white">Proofstack AI Assistant</h3>
           </div>
           <button aria-label="Close chat" onClick={closeChat} className="text-zinc-500 hover:text-white transition-colors">
             <X className="w-5 h-5" />

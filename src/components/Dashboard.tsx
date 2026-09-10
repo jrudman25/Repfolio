@@ -102,7 +102,7 @@ export default function Dashboard({ initialProjects }: { initialProjects: Projec
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-zinc-800">
           <div>
             <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent">
-              Repfolio
+              Proofstack
             </h1>
             <p className="text-zinc-400 mt-2">Manage and query your GitHub portfolio.</p>
           </div>
