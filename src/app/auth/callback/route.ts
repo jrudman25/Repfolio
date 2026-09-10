@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAppUrl } from '@/lib/env-public'
+import { storeGithubToken } from '@/lib/github-token-store'
 // The client you created from the Server-Side Auth instructions
 import { createClient } from '@/utils/supabase/server'
 
@@ -25,8 +26,9 @@ export async function GET(request: Request) {
   if (code) {
     try {
       const supabase = await createClient()
-      const { error } = await supabase.auth.exchangeCodeForSession(code)
-      if (!error) {
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+      if (!error && data.session?.user.id && data.session.provider_token) {
+        await storeGithubToken(data.session.user.id, data.session.provider_token)
         const redirectOrigin = origin // original origin before load balancer
         // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
         return NextResponse.redirect(`${redirectOrigin}${next}`)

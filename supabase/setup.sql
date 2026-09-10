@@ -10,6 +10,12 @@ create table profiles (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+create table github_credentials (
+  user_id uuid references auth.users on delete cascade primary key,
+  encrypted_token text not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
 -- Create projects table
 create table projects (
   id uuid default gen_random_uuid() primary key,
@@ -71,6 +77,9 @@ create index todos_project_id_idx on todos (project_id);
 
 -- RLS Setup
 alter table profiles enable row level security;
+alter table github_credentials enable row level security;
+revoke all on table github_credentials from anon, authenticated;
+grant select, insert, update, delete on table github_credentials to service_role;
 alter table projects enable row level security;
 alter table milestones enable row level security;
 alter table todos enable row level security;

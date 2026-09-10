@@ -25,6 +25,14 @@ export function getWebhookSecret() {
   return requiredEnv('GITHUB_WEBHOOK_SECRET', process.env.GITHUB_WEBHOOK_SECRET)
 }
 
+export function getGithubTokenEncryptionKey() {
+  assertServer()
+  const encoded = requiredEnv('GITHUB_TOKEN_ENCRYPTION_KEY', process.env.GITHUB_TOKEN_ENCRYPTION_KEY)
+  const key = Buffer.from(encoded, 'base64')
+  if (key.length !== 32 || key.toString('base64') !== encoded) throw new Error('Invalid environment variable: GITHUB_TOKEN_ENCRYPTION_KEY')
+  return key
+}
+
 export function getSupabaseServiceKey() {
   assertServer()
   return requiredEnv('SUPABASE_SERVICE_ROLE_KEY', process.env.SUPABASE_SERVICE_ROLE_KEY)
@@ -47,6 +55,7 @@ export function validateServerEnv() {
     () => requiredEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
     getSupabaseServiceKey,
     getWebhookSecret,
+    getGithubTokenEncryptionKey,
     getGeminiApiKey,
     () => originEnv('UPSTASH_REDIS_REST_URL', process.env.UPSTASH_REDIS_REST_URL),
     () => requiredEnv('UPSTASH_REDIS_REST_TOKEN', process.env.UPSTASH_REDIS_REST_TOKEN),

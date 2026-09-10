@@ -4,6 +4,7 @@ import { expect, it } from 'vitest'
 
 const sql = (name: string) => readFileSync(resolve(process.cwd(), 'supabase', name), 'utf8').toLowerCase()
 const migration = sql('migrations/20260906000000_production_hardening.sql')
+const credentialsMigration = sql('migrations/20260909000000_github_credentials.sql')
 const setup = sql('setup.sql')
 const functions = sql('functions.sql')
 
@@ -14,6 +15,18 @@ it('keeps the migration transactional and free of row deletion or RLS weakening'
   expect(migration).toContain("'readme:history:' || pe.id::text")
   expect(migration).toContain("'legacy:' || pe.id::text")
   expect(migration).toContain('order by created_at desc, id desc')
+})
+it('keeps GitHub credentials encrypted and inaccessible to browser roles', () => {
+  for (const text of [setup, credentialsMigration]) {
+    expect(text).toContain('github_credentials')
+    expect(text).toContain('encrypted_token text not null')
+    expect(text).toContain('enable row level security')
+    expect(text).toMatch(/revoke all on table (?:public\.)?github_credentials from anon, authenticated/)
+    expect(text).not.toMatch(/create policy[\s\S]*github_credentials/)
+    expect(text).not.toMatch(/\bprovider_token\b|\baccess_token\b/)
+  }
+  expect(credentialsMigration.trim()).toMatch(/^begin;[\s\S]*commit;$/)
+  expect(credentialsMigration).toContain('on delete cascade')
 })
 it('aligns fresh setup and migration uniqueness, cosine search and indexes', () => {
   for (const text of [setup, migration]) {

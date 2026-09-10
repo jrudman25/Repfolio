@@ -3,9 +3,10 @@ import { POST as chat } from './chat/route'
 import { POST as sync } from './sync/route'
 import { POST as processProject } from './process-project/route'
 
-const io = vi.hoisted(() => ({ getUser: vi.fn(), getSession: vi.fn(), from: vi.fn(), rpc: vi.fn(), eval: vi.fn(), get: vi.fn(), set: vi.fn(), embed: vi.fn(), generate: vi.fn() }))
+const io = vi.hoisted(() => ({ getUser: vi.fn(), getSession: vi.fn(), from: vi.fn(), rpc: vi.fn(), eval: vi.fn(), get: vi.fn(), set: vi.fn(), embed: vi.fn(), generate: vi.fn(), storeToken: vi.fn(), getToken: vi.fn() }))
 vi.mock('next/headers', () => ({ cookies: async () => ({ getAll: () => [], set: vi.fn() }) }))
 vi.mock('@supabase/ssr', () => ({ createServerClient: () => ({ auth: { getUser: io.getUser, getSession: io.getSession }, from: io.from, rpc: io.rpc }) }))
+vi.mock('@/lib/github-token-store', () => ({ storeGithubToken: io.storeToken, getStoredGithubToken: io.getToken }))
 vi.mock('@upstash/redis', () => ({ Redis: class { eval = io.eval; get = io.get; set = io.set } }))
 vi.mock('@google/genai', () => ({ GoogleGenAI: class {
   models = { embedContent: io.embed, generateContent: io.generate }

@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
+import { getStoredGithubToken } from './github-token-store'
 import { ApiError } from './api-validation'
 
 export async function authenticateUser() {
@@ -11,7 +12,8 @@ export async function authenticateUser() {
 export async function getProviderToken(context: Awaited<ReturnType<typeof authenticateUser>>): Promise<string | undefined> {
   const { data: { session }, error } = await context.supabase.auth.getSession()
   if (error || !session || session.user.id !== context.userId) throw new ApiError(401, 'Unauthorized')
-  return session.provider_token || undefined
+  if (session.provider_token) return session.provider_token
+  return getStoredGithubToken(context.userId)
 }
 
 export async function requireProject(context: Awaited<ReturnType<typeof authenticateUser>>, projectId: string) {

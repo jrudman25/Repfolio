@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { POST } from './route'
 
-const io = vi.hoisted(() => ({ getUser: vi.fn(), getSession: vi.fn(), from: vi.fn(), eval: vi.fn(), get: vi.fn(), set: vi.fn(), upsert: vi.fn(), single: vi.fn() }))
+const io = vi.hoisted(() => ({ getUser: vi.fn(), getSession: vi.fn(), from: vi.fn(), eval: vi.fn(), get: vi.fn(), set: vi.fn(), upsert: vi.fn(), single: vi.fn(), storeToken: vi.fn(), getToken: vi.fn() }))
 vi.mock('next/headers', () => ({ cookies: async () => ({ getAll: () => [], set: vi.fn() }) }))
+vi.mock('@/lib/github-token-store', () => ({ storeGithubToken: io.storeToken, getStoredGithubToken: io.getToken }))
 vi.mock('@supabase/ssr', () => ({ createServerClient: () => ({ auth: { getUser: io.getUser, getSession: io.getSession }, from: io.from }) }))
 vi.mock('@upstash/redis', () => ({ Redis: class { eval = io.eval; get = io.get; set = io.set } }))
 const userId = 'user-a'
@@ -36,6 +37,13 @@ it('paginates and upserts bounded batches owned by the verified user', async () 
     expect(batch.every((row: { user_id: string }) => row.user_id === userId)).toBe(true)
     expect(options).toEqual({ onConflict: 'user_id,github_repo_id' })
   }
+})
+it('uses the encrypted stored token when the refreshed session omits the provider token', async () => {
+  io.getSession.mockResolvedValue({ data: { session: { user: { id: userId } } }, error: null })
+  io.getToken.mockResolvedValue('stored-token')
+  expect((await POST(request())).status).toBe(200)
+  expect(io.getToken).toHaveBeenCalledWith(userId)
+  expect(io.storeToken).not.toHaveBeenCalled()
 })
 it.each([false, true])('reports only confirmed writes when a later batch fails (throw=%s)', async thrown => {
   io.upsert.mockResolvedValueOnce({ error: null })

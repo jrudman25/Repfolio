@@ -18,7 +18,7 @@ A GitHub portfolio manager built with Next.js 15, React 19, Supabase, Gemini, an
 - Supabase with GitHub OAuth enabled and the `vector` extension available.
 - A Gemini API key with access to the model IDs above.
 - An Upstash Redis REST database for cache isolation, rate limits, and processing leases.
-- A GitHub OAuth app configured in Supabase. The session must include the provider token for sync; reauthenticate when it is unavailable. Private repositories require appropriate GitHub permissions.
+- A GitHub OAuth app configured in Supabase. GitHub provider tokens are captured during the callback and encrypted at rest for later syncs. Private repositories require appropriate GitHub permissions.
 
 ## Installation
 
@@ -36,19 +36,20 @@ Set every variable in `.env.local.example` before running the server:
 | `NEXT_PUBLIC_APP_URL` | Canonical application origin; HTTPS in production, without credentials, path, query, or fragment |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only privileged key used by the signed webhook |
 | `GITHUB_WEBHOOK_SECRET` | Shared webhook HMAC secret; mandatory |
+| `GITHUB_TOKEN_ENCRYPTION_KEY` | Server-only canonical base64 encoding of 32 random bytes used for AES-256-GCM |
 | `GEMINI_API_KEY` | Server-only Gemini credential |
 | `UPSTASH_REDIS_REST_URL` | HTTPS Redis REST origin |
 | `UPSTASH_REDIS_REST_TOKEN` | Server-only Redis credential |
 
-Never prefix privileged keys with `NEXT_PUBLIC_`. Public variables are bundled at build time. Use distinct service resources for production and development. Redis keys include the application environment (`VERCEL_ENV`, falling back to `NODE_ENV`), the user identity, and, for GitHub caches, a SHA-256 digest of the complete authorization context. Raw access tokens and token fragments are never used as keys.
+Never prefix privileged keys with `NEXT_PUBLIC_`. Public variables are bundled at build time. Use distinct service resources for production and development. Generate `GITHUB_TOKEN_ENCRYPTION_KEY` with a cryptographically secure 32-byte generator, encode it as canonical base64, and keep it stable for the lifetime of stored credentials; rotating it requires reauthentication or a controlled re-encryption process. Redis keys include the application environment (`VERCEL_ENV`, falling back to `NODE_ENV`), the user identity, and, for GitHub caches, a SHA-256 digest of the complete authorization context. Raw access tokens and token fragments are never used as keys.
 
 ### Database setup and upgrades
 
 For a clean database, apply `supabase/setup.sql`, then `supabase/functions.sql`, using a reviewed database deployment process. These define the RLS policies required by the application.
 
-For an existing installation, review and apply `supabase/migrations/20260906000000_production_hardening.sql` before deploying the new processing route. Back up the database and test restoration first. Test the migration against a local or staging copy, including a second run to confirm idempotency. Pause writes during the upgrade: the migration takes exclusive table locks and builds an HNSW index non-concurrently.
+For an existing installation, review and apply `supabase/migrations/20260906000000_production_hardening.sql` and `supabase/migrations/20260909000000_github_credentials.sql` before deploying the corresponding application changes. Back up the database and test restoration first. Test the hardening migration against a local or staging copy, including a second run to confirm idempotency. Pause writes during that upgrade: it takes exclusive table locks and builds an HNSW index non-concurrently.
 
-The migration widens GitHub repository IDs to bigint, replaces the inner-product vector index with a cosine index, adds lookup indexes, hardens function search paths, and introduces embedding-source uniqueness. The `(project_id, source)` unique index also covers lookups by `project_id`. Existing embeddings are preserved: the latest recognized legacy README becomes current, previous versions become historical sources excluded from retrieval, and other legacy rows receive unique legacy sources. Ambiguous mappings abort the transaction for operator review rather than deleting data.
+The hardening migration widens GitHub repository IDs to bigint, replaces the inner-product vector index with a cosine index, adds lookup indexes, hardens function search paths, and introduces embedding-source uniqueness. The credentials migration adds a service-role-only table containing authenticated ciphertext; browser roles have no table grants or RLS policies, and deleting the Auth user cascades to the credential. The `(project_id, source)` unique index also covers lookups by `project_id`. Existing embeddings are preserved: the latest recognized legacy README becomes current, previous versions become historical sources excluded from retrieval, and other legacy rows receive unique legacy sources. Ambiguous mappings abort the transaction for operator review rather than deleting data.
 
 Restore from a verified backup if an upgrade cannot be completed safely. Do not run the clean-install schema over an existing database. Do not roll back the application to a duplicate-inserting processor while retaining the new schema without reviewing compatibility.
 
@@ -71,7 +72,7 @@ The handler verifies HMAC SHA-256 over the original request bytes with a timing-
 - Repository lists are cached for one hour and READMEs for 24 hours. Webhook metadata updates do not invalidate these caches. Cache isolation separates both users and tokens, including anonymous README requests.
 - Per-user atomic limits: chat 20 requests per 60 seconds, sync 5 per 300 seconds, processing 10 per 300 seconds. HTTP 429 includes `Retry-After`; unavailable Redis fails closed with 503.
 - Request bodies are streamed with caps of 64 KiB for chat and 1 KiB for sync/processing. Sync accepts no body. Invalid JSON, oversized bodies, invalid UUIDs, and malformed chat input return 400. Chat accepts 1 to 40 user/assistant messages, at most 8,000 characters per message and 32,000 total, ending with a user message.
-- Project-specific APIs check ownership in addition to RLS. Server authentication uses `getUser()` before any provider-token session lookup. Production callback redirects use the configured application origin and ignore forwarded hosts; only safe local `next` paths are accepted.
+- Project-specific APIs check ownership in addition to RLS. Server authentication uses `getUser()` before any provider-token session lookup. The OAuth callback encrypts GitHub tokens with AES-256-GCM and user-bound authenticated data before service-role storage; refreshed sessions retrieve the ciphertext server-side. Production callback redirects use the configured application origin and ignore forwarded hosts; only safe local `next` paths are accepted.
 - Processing uses a 300-second user/project Redis lease, with owner-checked renewal and release. Concurrent requests return 409. The lease is practical exclusion, not database fencing against arbitrarily stalled writes.
 - Summary updates and embedding upserts are separate database operations. Database failures are reported, but a failed embedding write may follow a successful summary update. Reprocessing repairs the current embedding without duplicates.
 - README and retrieved context are untrusted model inputs, separated from system instructions. This reduces prompt-injection risk but does not make generated output authoritative.
