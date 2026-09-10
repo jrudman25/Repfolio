@@ -38,11 +38,11 @@ it('paginates and upserts bounded batches owned by the verified user', async () 
     expect(options).toEqual({ onConflict: 'user_id,github_repo_id' })
   }
 })
-it('uses the encrypted stored token when the refreshed session omits the provider token', async () => {
-  io.getSession.mockResolvedValue({ data: { session: { user: { id: userId } } }, error: null })
+it('prefers the encrypted stored token without consulting the transient provider session', async () => {
   io.getToken.mockResolvedValue('stored-token')
   expect((await POST(request())).status).toBe(200)
   expect(io.getToken).toHaveBeenCalledWith(userId)
+  expect(io.getSession).not.toHaveBeenCalled()
   expect(io.storeToken).not.toHaveBeenCalled()
 })
 it.each([false, true])('reports only confirmed writes when a later batch fails (throw=%s)', async thrown => {

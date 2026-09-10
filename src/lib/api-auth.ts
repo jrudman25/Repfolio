@@ -10,10 +10,11 @@ export async function authenticateUser() {
 }
 
 export async function getProviderToken(context: Awaited<ReturnType<typeof authenticateUser>>): Promise<string | undefined> {
+  const storedToken = await getStoredGithubToken(context.userId)
+  if (storedToken) return storedToken
   const { data: { session }, error } = await context.supabase.auth.getSession()
   if (error || !session || session.user.id !== context.userId) throw new ApiError(401, 'Unauthorized')
-  if (session.provider_token) return session.provider_token
-  return getStoredGithubToken(context.userId)
+  return session.provider_token || undefined
 }
 
 export async function requireProject(context: Awaited<ReturnType<typeof authenticateUser>>, projectId: string) {
