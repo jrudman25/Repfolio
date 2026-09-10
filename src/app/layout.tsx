@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
+import 'devicon/devicon-base.css'
 import './globals.css'
 
 const geistSans = Geist({
@@ -26,9 +27,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <head>
-        <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css" />
-      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-zinc-950 text-white selection:bg-zinc-800`}>
         {children}
         <ChatWidget />

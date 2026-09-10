@@ -106,7 +106,7 @@ export default function ProjectDetailClient({
               ) : (
                 milestones.map(milestone => (
                   <div key={milestone.id} className="flex items-start gap-3 p-3 bg-zinc-950 rounded-xl border border-zinc-800/50">
-                    <button onClick={() => handleToggleMilestone(milestone.id, milestone.status)} className="mt-1 flex-shrink-0">
+                    <button aria-label={`Complete milestone: ${milestone.title}`} aria-pressed={milestone.status === 'completed'} onClick={() => handleToggleMilestone(milestone.id, milestone.status)} className="mt-1 flex-shrink-0">
                       {milestone.status === 'completed' ? (
                         <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                       ) : (
@@ -123,9 +123,10 @@ export default function ProjectDetailClient({
               )}
             </div>
 
-            <form onSubmit={handleAddMilestone} className="flex gap-2">
+            <form aria-label="Add milestone" onSubmit={handleAddMilestone} className="flex gap-2">
               <input 
                 type="text" 
+                aria-label="New milestone"
                 placeholder="New milestone..." 
                 value={newMilestoneTitle}
                 onChange={e => setNewMilestoneTitle(e.target.value)}
@@ -148,7 +149,7 @@ export default function ProjectDetailClient({
                 todos.map(todo => (
                   <div key={todo.id} className="flex items-center justify-between group p-2 hover:bg-zinc-950 rounded-lg transition-colors">
                     <div className="flex items-center gap-3">
-                      <button onClick={() => handleToggleTodo(todo.id, todo.is_completed)}>
+                      <button aria-label={`Complete task: ${todo.task}`} aria-pressed={todo.is_completed} onClick={() => handleToggleTodo(todo.id, todo.is_completed)}>
                         {todo.is_completed ? (
                           <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                         ) : (
@@ -160,8 +161,9 @@ export default function ProjectDetailClient({
                       </span>
                     </div>
                     <button 
+                      aria-label={`Delete task: ${todo.task}`}
                       onClick={() => handleDeleteTodo(todo.id)}
-                      className="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-red-400 transition-all"
+                      className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 p-1 text-zinc-500 hover:text-red-400 transition-all"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -170,9 +172,10 @@ export default function ProjectDetailClient({
               )}
             </div>
 
-            <form onSubmit={handleAddTodo} className="flex gap-2">
+            <form aria-label="Add task" onSubmit={handleAddTodo} className="flex gap-2">
               <input 
                 type="text" 
+                aria-label="New task"
                 placeholder="New task..." 
                 value={newTodo}
                 onChange={e => setNewTodo(e.target.value)}

@@ -1,7 +1,8 @@
 import { updateSession } from '@/utils/supabase/proxy'
-import { type NextRequest } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
+  if (request.nextUrl.pathname === '/api/health') return NextResponse.next()
   return await updateSession(request)
 }
 

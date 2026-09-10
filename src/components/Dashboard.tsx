@@ -43,10 +43,10 @@ export default function Dashboard({ initialProjects }: { initialProjects: Projec
         // In a real app, we would re-fetch projects from Supabase here
         window.location.reload()
       } else {
-        setSyncMessage(`Error: ${data.error}`)
+        setSyncMessage('Unable to sync projects. Please try again.')
       }
-    } catch (e) {
-      setSyncMessage(`Error: ${e instanceof Error ? e.message : String(e)}`)
+    } catch {
+      setSyncMessage('Unable to sync projects. Please try again.')
     } finally {
       setIsSyncing(false)
     }
@@ -63,8 +63,7 @@ export default function Dashboard({ initialProjects }: { initialProjects: Projec
       if (res.ok) {
         window.location.reload()
       } else {
-        const err = await res.json()
-        alert('Failed to generate summary: ' + (err.error || err.message || 'Unknown error'))
+        alert('Unable to generate summary. Please try again.')
       }
     } catch (e) {
       console.error(e)
@@ -108,7 +107,7 @@ export default function Dashboard({ initialProjects }: { initialProjects: Projec
             <p className="text-zinc-400 mt-2">Manage and query your GitHub portfolio.</p>
           </div>
           <div className="flex items-center gap-4">
-            {syncMessage && <span className="text-sm text-zinc-400">{syncMessage}</span>}
+            {syncMessage && <span role="status" className="text-sm text-zinc-400">{syncMessage}</span>}
             <Button
               onClick={handleSync}
               disabled={isSyncing}
@@ -126,6 +125,7 @@ export default function Dashboard({ initialProjects }: { initialProjects: Projec
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
             <input
               type="text"
+              aria-label="Search projects and technologies"
               placeholder="Search projects, technologies..."
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -133,13 +133,13 @@ export default function Dashboard({ initialProjects }: { initialProjects: Projec
             />
           </div>
           <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-            <Button variant={sort === 'updated' ? 'default' : 'secondary'} onClick={() => setSort('updated')} className="rounded-xl whitespace-nowrap">
+            <Button aria-pressed={sort === 'updated'} variant={sort === 'updated' ? 'default' : 'secondary'} onClick={() => setSort('updated')} className="rounded-xl whitespace-nowrap">
               Recently Updated
             </Button>
-            <Button variant={sort === 'stars' ? 'default' : 'secondary'} onClick={() => setSort('stars')} className="rounded-xl whitespace-nowrap">
+            <Button aria-pressed={sort === 'stars'} variant={sort === 'stars' ? 'default' : 'secondary'} onClick={() => setSort('stars')} className="rounded-xl whitespace-nowrap">
               Most Stars
             </Button>
-            <Button variant={sort === 'name' ? 'default' : 'secondary'} onClick={() => setSort('name')} className="rounded-xl whitespace-nowrap">
+            <Button aria-pressed={sort === 'name'} variant={sort === 'name' ? 'default' : 'secondary'} onClick={() => setSort('name')} className="rounded-xl whitespace-nowrap">
               Alphabetical
             </Button>
           </div>
@@ -158,7 +158,7 @@ export default function Dashboard({ initialProjects }: { initialProjects: Projec
                   <Link href={`/project/${project.id}`} className="text-xl font-bold hover:text-indigo-400 transition-colors">
                     {project.name}
                   </Link>
-                  <a href={project.html_url} target="_blank" rel="noreferrer" className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-white">
+                  <a href={project.html_url} aria-label={`View ${project.name} on GitHub (opens in new tab)`} target="_blank" rel="noreferrer" className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity text-zinc-500 hover:text-white">
                     <GithubIcon className="w-4 h-4" />
                   </a>
                 </div>
