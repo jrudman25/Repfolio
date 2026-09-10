@@ -1,27 +1,38 @@
 import { NextResponse } from 'next/server'
+import { getAppUrl } from '@/lib/env-public'
 // The client you created from the Server-Side Auth instructions
 import { createClient } from '@/utils/supabase/server'
 
+function safeNext(value: string | null) {
+  if (!value || !/^\/(?!\/)/.test(value) || /[\\%\u0000-\u0020\u007f-\u009f]/.test(value)) return '/'
+  const resolved = new URL(value, 'https://local.invalid')
+  if (resolved.origin !== 'https://local.invalid' || resolved.pathname.startsWith('//')) return '/'
+  return `${resolved.pathname}${resolved.search}${resolved.hash}`
+}
+
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url)
+  const { searchParams } = new URL(request.url)
+  let origin: string
+  try {
+    origin = getAppUrl()
+  } catch {
+    return NextResponse.json({ error: 'Authentication unavailable' }, { status: 503 })
+  }
   const code = searchParams.get('code')
   // if "next" is in param, use it as the redirect URL
-  const next = searchParams.get('next') ?? '/'
+  const next = safeNext(searchParams.get('next'))
 
   if (code) {
-    const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
-      const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
-      const isLocalhost = process.env.NODE_ENV === 'development'
-      if (isLocalhost) {
+    try {
+      const supabase = await createClient()
+      const { error } = await supabase.auth.exchangeCodeForSession(code)
+      if (!error) {
+        const redirectOrigin = origin // original origin before load balancer
         // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
-        return NextResponse.redirect(`${origin}${next}`)
-      } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`)
-      } else {
-        return NextResponse.redirect(`${origin}${next}`)
+        return NextResponse.redirect(`${redirectOrigin}${next}`)
       }
+    } catch {
+      return NextResponse.redirect(`${origin}/auth/auth-code-error`)
     }
   }
 
