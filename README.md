@@ -37,6 +37,7 @@ Set every variable in `.env.local.example` before running the server:
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only privileged key used by the signed webhook |
 | `GITHUB_WEBHOOK_SECRET` | Shared webhook HMAC secret; mandatory |
 | `GITHUB_TOKEN_ENCRYPTION_KEY` | Server-only canonical base64 encoding of 32 random bytes used for AES-256-GCM |
+| `CRON_SECRET` | Server-only random bearer secret of at least 32 characters for maintenance requests |
 | `GEMINI_API_KEY` | Server-only Gemini credential |
 | `UPSTASH_REDIS_REST_URL` | HTTPS Redis REST origin |
 | `UPSTASH_REDIS_REST_TOKEN` | Server-only Redis credential |

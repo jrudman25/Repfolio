@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { getGeminiApiKey, getGithubTokenEncryptionKey, getRedisEnv, validateServerEnv } from './env-server'
+import { getCronSecret, getGeminiApiKey, getGithubTokenEncryptionKey, getRedisEnv, validateServerEnv } from './env-server'
 import { getAppUrl, getPublicSupabaseEnv } from './env-public'
 import { register } from '../instrumentation'
 
@@ -10,6 +10,7 @@ const valid = {
   NEXT_PUBLIC_SUPABASE_ANON_KEY: 'dummy-anon',
   SUPABASE_SERVICE_ROLE_KEY: 'dummy-service-role',
   GITHUB_WEBHOOK_SECRET: 'dummy-webhook',
+  CRON_SECRET: 'cron-secret-with-at-least-32-characters',
   GITHUB_TOKEN_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64'),
   GEMINI_API_KEY: 'dummy-gemini',
   UPSTASH_REDIS_REST_URL: 'https://redis.upstash.io',
@@ -65,6 +66,10 @@ describe('server startup configuration', () => {
   it.each(['short', Buffer.alloc(31).toString('base64'), Buffer.alloc(32).toString('base64url')])('requires a canonical base64 256-bit token encryption key', value => {
     vi.stubEnv('GITHUB_TOKEN_ENCRYPTION_KEY', value)
     expect(getGithubTokenEncryptionKey).toThrow('GITHUB_TOKEN_ENCRYPTION_KEY')
+  })
+  it.each(['short', ' '.repeat(32)])('requires a nonblank cron secret with at least 32 characters', value => {
+    vi.stubEnv('CRON_SECRET', value)
+    expect(getCronSecret).toThrow('CRON_SECRET')
   })
   it('skips aggregate validation only in the production build phase', async () => {
     vi.stubEnv('GEMINI_API_KEY', undefined)

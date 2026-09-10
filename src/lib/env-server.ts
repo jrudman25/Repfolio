@@ -25,6 +25,13 @@ export function getWebhookSecret() {
   return requiredEnv('GITHUB_WEBHOOK_SECRET', process.env.GITHUB_WEBHOOK_SECRET)
 }
 
+export function getCronSecret() {
+  assertServer()
+  const secret = requiredEnv('CRON_SECRET', process.env.CRON_SECRET)
+  if (secret.length < 32) throw new Error('Invalid environment variable: CRON_SECRET')
+  return secret
+}
+
 export function getGithubTokenEncryptionKey() {
   assertServer()
   const encoded = requiredEnv('GITHUB_TOKEN_ENCRYPTION_KEY', process.env.GITHUB_TOKEN_ENCRYPTION_KEY)
@@ -55,6 +62,7 @@ export function validateServerEnv() {
     () => requiredEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
     getSupabaseServiceKey,
     getWebhookSecret,
+    getCronSecret,
     getGithubTokenEncryptionKey,
     getGeminiApiKey,
     () => originEnv('UPSTASH_REDIS_REST_URL', process.env.UPSTASH_REDIS_REST_URL),
